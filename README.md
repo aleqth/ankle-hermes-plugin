@@ -1,0 +1,84 @@
+# ANKLE OS — Portable Agent Plugin for Hermes Agent
+
+Create private websites in ANKLE Worlds, edit drafts with optimistic `draft_revision` checks, search the 409,000+ SURF visual archive, interact with World agents, and explicitly publish portable `.ankl` cartridges from [Hermes Agent](https://hermes-agent.nousresearch.com).
+
+This directory is a portable [Agent Plugins v1](https://agent-plugins.org) package (`plugin.json`, `mcp.json`, and `skills/ankle/SKILL.md`). It ships **no executable code** and installs **no Python or Node.js dependencies**.
+
+## Install
+
+From the Hermes plugin catalog (once the catalog PR is merged), or straight from this repository:
+
+```bash
+hermes plugins install ankle            # from the catalog
+# or: hermes plugins install aleqth/ankle-hermes-plugin
+hermes plugins enable ankle
+hermes gateway restart
+```
+
+
+## Authentication
+
+**Option A: OAuth, no key to paste (recommended).** ANKLE's MCP server supports OAuth 2.1 with PKCE and the RFC 8628 device flow:
+
+```bash
+hermes mcp add ankle --url https://aleqth.com/api/mcp --auth oauth
+hermes mcp login ankle --flow device   # open https://aleqth.com/oauth/device and enter the code
+```
+
+You approve the requested scopes on aleqth.com; you can revoke the grant at any time from https://aleqth.com/developers.
+
+**Option B: a scoped ANKLE agent key** (what this plugin's bundled `mcp.json` uses)
+
+The bundled `mcp.json` connects to `https://aleqth.com/api/mcp` over Streamable HTTP (`strict_redirect_headers: true`), requires the `ANKLE_AGENT_KEY` environment variable, and attaches `Authorization: Bearer ${ANKLE_AGENT_KEY}` on every MCP request:
+
+1. **Mint a Scoped Agent Key (`ANKLE_AGENT_KEY`):** Sign in at <https://aleqth.com/developers> (or <https://ankle.studio/developers>) and create a named agent key (`ak_...`) with only the scope tier you want (`read`, `draft`, or optional `builder.publish` / `builder.clear` / `agent.talk` / `dada.transcribe`).
+2. **Set `ANKLE_AGENT_KEY` in Hermes:** Add `ANKLE_AGENT_KEY=ak_...` to your active Hermes profile `.env` (or enter it when Hermes prompts for `requires_env: [ANKLE_AGENT_KEY]`). Never paste your raw key into chat.
+3. **Fail-Closed Connection:** Live `POST https://aleqth.com/api/mcp` requires an active agent key for **all** operations—including read-only discovery and `surf_search`—and returns HTTP `401` (`invalid agent key`) for unauthenticated requests. If `ANKLE_AGENT_KEY` is not set in your profile environment, Hermes refuses to connect (`missing_credentials`) instead of sending an unauthenticated request.
+
+## What It Adds
+
+### 1. Skill (`skills/ankle/SKILL.md`)
+
+Load with `skill_view("ankle:ankle")`. Sourced from the canonical live specification at <https://ankle.md/SKILL.md> (also served at <https://aleqth.com/api/developer/skill.md>):
+- End-to-end World & Page Builder authoring workflow (`discover` -> `worlds_list` -> `surf_search` -> `builder_create` -> `builder_patch` -> `builder_attach` -> explicit `builder_publish`)
+- Optimistic concurrency (`expected_revision`) and retry safety (`idempotency_key`)
+- DADA L0–L3 semantic composition rules and Ankle96 / Ankle 2029 surface design grammar
+
+### 2. Remote MCP Server (`https://aleqth.com/api/mcp`, up to 16 tools)
+
+Which tools appear depends on the scopes you grant (the default OAuth consent exposes 10). Every tool requires an authenticated connection (OAuth grant or `ANKLE_AGENT_KEY`) with the corresponding scope tier:
+
+| Tool | Scope Tier | Read-Only | Description |
+|---|---|---|---|
+| `worlds_list` | `read` | Yes | List Worlds you founded or can contribute to, with public URLs and permissions |
+| `builder_list` | `read` | Yes | List your private and published websites with editor links and `draft_revision` |
+| `builder_get` | `read` | Yes | Read complete stored HTML and layers for a website draft |
+| `surf_search` | `read` | Yes | Search the 409K+ SURF cultural archive for platform-renderable media references |
+| `agent_brief` | `read` | Yes | Get a grounded, cited brief of a 3D World agent and its home World imprint |
+| `world_describe` | `read` | Yes | Inspect a World's public capability manifest, paired coin metadata, and schema |
+| `world_read` | `read` | Yes | Read public World posts, objects, connected marks, and imprint digest |
+| `worlds_found` | `draft` | No | Claim an unused word for your account as a new World |
+| `builder_create` | `draft` | No | Save HTML as a **private** draft (`visibility: "private"`, `is_published: false`) |
+| `builder_patch` | `draft` | No | Apply exact source replacements guarded by `expected_revision` and `idempotency_key` |
+| `builder_attach` | `draft` | No | Attach a private website draft to a World you can contribute to |
+| `world_ask` | `draft` | No | Ask a question to a World's paired agent with cited World evidence |
+| `world_propose` | `draft` | No | Submit a structured contribution proposal to a World |
+| `builder_publish` | `publish` (optional) | No | Explicitly compile, verify, and publish a stored revision to a live URL and `.ankl` cartridge |
+| `builder_clear` | `clear` (optional) | No | Clear stored HTML/layers on a draft while preserving identity and published snapshot |
+| `agent_talk` | `talk` (optional) | No | Converse with a 3D agent you own, grounded in its home World imprint |
+| `dada_transcribe` | `dada.transcribe` (optional) | Yes | Transcribe a ready-made image or reference into structured DADA L0–L3 layers |
+
+## Honest Disclosure
+
+- **Hosted Connector (No Local Code):** This package contains only declarative JSON (`plugin.json`, `mcp.json`) and Markdown (`skills/ankle/SKILL.md`, `README.md`). Every MCP tool invocation is sent over HTTPS (`streamable-http`) to the hosted ANKLE OS server at `https://aleqth.com/api/mcp`. The tool catalog and server execution are controlled by `aleqth.com`.
+- **Active Agent Key Required (`ANKLE_AGENT_KEY`):** Every MCP call to `https://aleqth.com/api/mcp`—including read-only discovery (`worlds_list`, `builder_list`, `world_describe`, `world_read`, `agent_brief`) and SURF archive search (`surf_search`)—requires an active scoped ANKLE agent key minted at <https://aleqth.com/developers> and passed via `Authorization: Bearer ${ANKLE_AGENT_KEY}`. Unauthenticated requests to `/api/mcp` fail with HTTP `401` (`invalid agent key`). OAuth 2.1 is not active on this connector.
+- **What Reaches `aleqth.com`:** When the agent invokes an `ankle` MCP tool, the tool arguments—such as SURF search queries (`surf_search`), World names/questions/proposals (`worlds_*`, `world_*`), and authored HTML/CSS/JS drafts or text replacements (`builder_create`, `builder_patch`)—together with the `Authorization: Bearer ${ANKLE_AGENT_KEY}` header are transmitted to `https://aleqth.com/api/mcp` and audited under your authenticated ANKLE account. This plugin never reads local files, browser cookies, or environment secrets on its own.
+- **Private Drafts by Default; Explicit Publication Gate:** Creating (`builder_create`), editing (`builder_patch`), or attaching (`builder_attach`) a website saves a **private draft** (`is_published: false`). Nothing is published to the public web unless your connection key has been granted the optional `builder.publish` scope and you explicitly instruct the agent to call `builder_publish`.
+- **No Spend, Wallet, or Signing Tools; Zero Platform Credit Debit:** The ANKLE MCP server exposes **zero** wallet, token transfer, trading, Solana/Base signing, or Stripe/Whop billing tools. None of the 16 MCP tools debit platform ANKLE credits (`0` `ankle_credit` units charged; `builder_create` / `builder_patch` save your supplied HTML directly with no generation charge; `agent_talk` and `agent_brief` run deterministically on CPU/SQLite; if `world_ask` invokes a World's paired agent, `cost.world_api` is `"none"` and only the paired agent's existing external model provider usage policy applies).
+- **Upstream Catalog Pin (`TBD`):** `repo` and `sha` in `plugin-catalog/ankle.yaml` and `plugin.json` are set to `TBD` until the standalone public plugin repository is authorized by Alex.
+
+## Links
+
+- Protocol & Skill Docs: <https://ankle.md/SKILL.md> · <https://ankle.md/developers.md>
+- Capability Manifest: <https://aleqth.com/api/manifest.json>
+- Developer Access & Scoped Keys: <https://aleqth.com/developers>

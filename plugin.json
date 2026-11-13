@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ankle",
   "version": "2.3.0",
-  "description": "Create private websites in ANKLE Worlds, edit drafts with revision checks, search the 409K+ SURF cultural archive, and explicitly publish portable .ankl cartridges through the hosted ANKLE OS MCP server.",
+  "description": "Create private website drafts in ANKLE Worlds, edit with revision checks, search SURF, and publish websites with explicitly granted permissions. Verify portability from the returned export.",
   "author": {
     "name": "ANKLE OS",
     "url": "https://aleqth.com"

@@ -1,6 +1,6 @@
 ---
 name: ankle
-description: Create private websites in ANKLE Worlds, edit with revision checks, search SURF, and explicitly publish portable cartridges through the owner's scoped creator connection.
+description: Create private websites in ANKLE Worlds, edit with revision checks, search SURF, and explicitly publish websites through the owner's scoped creator connection; verify portability from the returned export.
 license: MIT
 compatibility: Portable Agent Plugins v1 (Hermes Agent >=0.20, Claude Code, Cursor, Codex)
 metadata:
@@ -19,14 +19,14 @@ Tool schemas: https://aleqth.com/api/manifest.json
 Public agent directory: https://aleqth.com/api/developer/agents?q=design&limit=12
 Read the directory to discover real identities; do not infer availability, private memory access or permission to message from a directory listing.
 
-Built-in Co-Pilot loads these instructions with each generation. Its native model tools can search SURF, list the owner’s Worlds, read the current saved canvas and discover public agents. Returned HTML still passes the existing revision and source checks. Full creator mutations below are available to scoped external MCP/CLI connections; they are not shell access inside an imported app.
+This package documents the hosted creator workflow. Hosted Builder interfaces and design guidance below are reference material, not components shipped by this package or proof of their current availability. Verify the requested surface and returned tool schemas.
 
 # External creator connection
 
 Start at https://aleqth.com/developers (or https://ankle.studio/developers). The user signs in, creates a named connection, chooses permissions and stores its one-time key as ANKLE_AGENT_KEY in the client environment. Never ask them to paste the key into a chat or a document. Never read browser cookies or local ANKLE account databases.
 
 Public discovery manifest (HTTP GET): https://aleqth.com/api/manifest.json
-Remote MCP: https://aleqth.com/api/mcp with Authorization: Bearer ${ANKLE_AGENT_KEY} (an active scoped ANKLE agent key from https://aleqth.com/developers is required for all MCP requests, including read-only discovery and SURF search; unauthenticated requests return HTTP 401 `invalid agent key`).
+Remote MCP: https://aleqth.com/api/mcp with Authorization: Bearer ${ANKLE_AGENT_KEY} (valid scoped authentication is required for all MCP requests, including discovery and SURF search; the bundled connection uses ANKLE_AGENT_KEY and a manual OAuth connection uses its own grant; unauthenticated requests return HTTP 401 `invalid agent key`).
 The bundled `mcp.json` configures the remote Streamable HTTP connection; no local executable or stdio adapter is shipped. Use only tools exposed by that authenticated connection. If it is unavailable, report the connection error rather than falling back to shell scripts or claiming success.
 
 ## End-to-end authoring through MCP
@@ -59,7 +59,7 @@ The owner's speech is acceptance criteria, not flavor text. If they have to expl
 - Prove the live user path before claiming done. A 200 that lies is a break.
 - Protocol, not a club. Ownership, collecting, and artist-set buy terms are how the OS feels. Do not make people "do Web3." Do not invent a second maker, gallery, or market surface — finish World → Builder → object → gallery → agent-in-World.
 
-Full operator canon for mesh agents: treat this block as the public subset of `ankle-operator-canon`.
+Use the guidance included here; this package does not require a separate operator canon.
 
 ## Source and taste
 
@@ -69,11 +69,11 @@ SURF search returns references, not guaranteed safe, available or licensed media
 
 ## Scope
 
-These tools act as the user's scoped connection. No wallet, trading, signing, autonomous spending, OAuth login, live unsaved DOM synchronization or private shared-memory access is provided. Discovery describes public capabilities, not a directory of private operator sessions. Do not post activity/messages unless the user explicitly asks.
+These tools act as the user's scoped connection. No wallet, trading, signing, autonomous spending, live unsaved DOM synchronization or private shared-memory access is provided by this package. Authentication, including OAuth, is configured by the host client. Discovery describes public capabilities, not a directory of private operator sessions. Do not post activity/messages unless the user explicitly asks.
 
 ## MCP skill and discovery resources
 
-After initialization, call `resources/list`, then `resources/read` with `ankle://creator-skill` or `ankle://agents`. Tool schemas come from `tools/list`; do not guess argument names. The public agent directory HTTP endpoint (`https://aleqth.com/api/developer/agents`) is available via HTTP GET at the directory URL above (all `/api/mcp` requests require an active `ANKLE_AGENT_KEY`). It exposes public identities only, not chat history, wallets, owner keys or active private operator sessions. No message is sent by discovery.
+After initialization, call `resources/list`, then `resources/read` with `ankle://creator-skill` or `ankle://agents`. Tool schemas come from `tools/list`; do not guess argument names. The public agent directory HTTP endpoint (`https://aleqth.com/api/developer/agents`) is available via HTTP GET at the directory URL above (all `/api/mcp` requests require valid scoped authentication). It exposes public identities only, not chat history, wallets, owner keys or active private operator sessions. No message is sent by discovery.
 
 ## Ankle96 restyling
 
@@ -106,7 +106,7 @@ Era presets (`campus-2007`, `status-2007`, `apple-2011`, …) borrow a historica
 
 A theme is complete when it answers nine questions: ground and panel · ink · type · edge · control grammar · density · motion idiom (`0 / 120 / 180ms`) · waiting and empty · chrome shape. If you need a new color, you are not building a surface; you are proposing a theme — say so.
 
-Full doctrine for agents building inside the OS: `aleqth-mind/references/ankle-surface-design-doctrine.md`.
+Use the design guidance included in this skill; no separate local doctrine file is shipped.
 
 ## World architecture and durable design intent
 
@@ -116,7 +116,7 @@ STP provides a reusable composition, not mandatory branding: a compact identity 
 
 Distinguish the two editing surfaces. World settings and the visual layout editor control section order, visibility, sizes, panel styles, wallpaper and widgets. Page Builder controls an authored page's HTML, styles, scripts and assets. Returning page HTML does not change the World configuration. Do not fake a calendar, shared chat, member permissions, email delivery or persistent community data with localStorage or invented endpoints. Reuse verified platform destinations/capabilities; if a connection is unavailable, identify the missing connection honestly and keep the working parts usable.
 
-A working World layout editor is available at `/static/world_designer.html?world=<observed-world-slug>` and through the current owner's Manage World → design layout control. It loads saved configuration, previews Community/Gallery/Project arrangements, reorders sections, hides supported panels, and selects one or two desktop columns while keeping one phone column. Saving writes only `panel_order`, `hidden_panels`, and `grid_layout` through the existing owner-authorized World edit route. Its JSON export/import is a layout recipe (`schema: ankle-world-layout`, `version: 1`), not a complete World backup or service installation. Import prepares a preview; Save applies it. Do not claim this tool edits the wallpaper or provisions calendars, notifications, databases, or permissions. The local World-plan planning artifact uses a different format and is not directly importable here. Preserve saved widgets and other configuration. A pre-save conflict check asks the owner to reload if the layout changed; it is not an atomic multi-editor merge.
+When supported by the current hosted service, the World layout editor is available at `/static/world_designer.html?world=<observed-world-slug>` and through the current owner's Manage World → design layout control. It loads saved configuration, previews Community/Gallery/Project arrangements, reorders sections, hides supported panels, and selects one or two desktop columns while keeping one phone column. Saving writes only `panel_order`, `hidden_panels`, and `grid_layout` through the existing owner-authorized World edit route. Its JSON export/import is a layout recipe (`schema: ankle-world-layout`, `version: 1`), not a complete World backup or service installation. Import prepares a preview; Save applies it. Do not claim this tool edits the wallpaper or provisions calendars, notifications, databases, or permissions. The local World-plan planning artifact uses a different format and is not directly importable here. Preserve saved widgets and other configuration. A pre-save conflict check asks the owner to reload if the layout changed; it is not an atomic multi-editor merge.
 
 For edits, inspect the current artifact first. Preserve source, asset URLs, interactions and unrelated sections. Apply the smallest requested transformation. Treat selected-element edits as local changes. Keep the architecture brief with the project's existing history/source rather than claiming private memory. Where useful, include a concise inert HTML comment describing the page's design intent and verified dependencies; never put secrets or personal information there.
 
